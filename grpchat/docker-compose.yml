@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: grpchat-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - grpchat-network
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grpchat-server
+    ports:
+      - "5001:5001"
+    environment:
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+    networks:
+      - grpchat-network
+    restart: unless-stopped
+    command: ["./grpchat", "-s", "-port", "5001", "-redis", "redis:6379"]
+
+networks:
+  grpchat-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+
